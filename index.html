@@ -1,0 +1,197 @@
+<html>
+<script src="player.js"></script>
+<script src="bullet.js"></script>
+<script src="circle_enemy.js"></script>
+<canvas id="Galaxy_Game" width="1510" height="710"></canvas>
+<script>
+    var g_Canvas = document.getElementById("Galaxy_Game");
+    var g_Context = g_Canvas.getContext("2d");
+    var Frame_Rate = 30;
+    var Time_Interval = 1000 / Frame_Rate;
+    var g_Player = new c_Player(g_Canvas.width / 2, g_Canvas.height / 2);
+    var g_enemy = new Array(4);
+    var g_Enemy_Xpos_Array = [g_Canvas.width / 2, g_Canvas.width / 2, -1500, 2900];
+    var g_Enemy_Ypos_Array = [-2900, 950, g_Canvas.height / 2, g_Canvas.height / 2];
+    var g_Enemy_Array_Len = g_enemy.length;
+    var g_distance = new Array(g_Enemy_Array_Len);
+    
+    
+    var g_Score = 0;
+    
+    var g_text_color="#000000";
+    function f_Enemy_initial() 
+    {
+        for (var i = 0; i < g_Enemy_Array_Len; i++) 
+        {
+            g_enemy[i] = new c_Enemy(g_Enemy_Xpos_Array[i], g_Enemy_Ypos_Array[i]);
+        }
+    }
+
+    
+
+    function g_enemy_move() 
+    {
+        g_enemy[0].Enemy_Ypos += g_enemy[0].Enemy_Move_Speed;
+        g_enemy[1].Enemy_Ypos -= g_enemy[1].Enemy_Move_Speed;
+        g_enemy[2].Enemy_Xpos += g_enemy[2].Enemy_Move_Speed;
+        g_enemy[3].Enemy_Xpos -= g_enemy[3].Enemy_Move_Speed;
+    }
+
+    function f_Enemy_and_Bullet_Collision() 
+    {
+        
+        for (var i = 0; i < g_Enemy_Array_Len; i++) 
+        {
+            g_distance[i] = Math.sqrt(((g_Player.bullet.Bullet_xpos - g_enemy[i].Enemy_Xpos) * (g_Player.bullet.Bullet_xpos - g_enemy[i].Enemy_Xpos)) + ((g_Player.bullet.Bullet_ypos - g_enemy[i].Enemy_Ypos) * (g_Player.bullet.Bullet_ypos - g_enemy[i].Enemy_Ypos)));
+            if (g_distance[i] < (g_Player.bullet.Bullet_radius + g_enemy[i].Enemy_Radius)) 
+            {
+                g_Score++;
+                g_Player.bullet.Start_animat_flag = 0;
+                g_Player.bullet.Bullet_xpos = g_Canvas.width / 2;
+                g_Player.bullet.Bullet_ypos = g_Canvas.height / 2;
+                g_enemy[i].Enemy_Xpos = g_Enemy_Xpos_Array[i];
+                g_enemy[i].Enemy_Ypos = g_Enemy_Ypos_Array[i];
+                g_enemy[i].Enemy_Radius = parseInt(Math.random() * (80 - 20) + 20);
+                g_enemy[i].Enemy_Move_Speed = parseInt(Math.random() * (25 - 5) + 5);
+            }
+        }
+    }
+
+    function f_Enemy_and_Player_Collision() 
+    {
+        for (var i = 0; i < g_Enemy_Array_Len; i++) 
+        {
+            g_distance[i] = Math.sqrt(((g_Player.Player_Xpos - g_enemy[i].Enemy_Xpos) * (g_Player.Player_Xpos - g_enemy[i].Enemy_Xpos)) + ((g_Player.Player_Ypos - g_enemy[i].Enemy_Ypos) * (g_Player.Player_Ypos - g_enemy[i].Enemy_Ypos)));
+            if (g_distance[i] < (g_Player.Player_Radius + g_enemy[i].Enemy_Radius)) {
+                g_Player.Player_Radius += 5;
+                g_enemy[i].Enemy_Xpos = g_Enemy_Xpos_Array[i];
+                g_enemy[i].Enemy_Ypos = g_Enemy_Ypos_Array[i];
+                g_enemy[i].Enemy_Radius = parseInt(Math.random() * (80 - 20) + 20);
+                g_enemy[i].Enemy_Move_Speed = parseInt(Math.random() * (25 - 5) + 5);
+            }
+        }
+    }
+
+    function f_ClearScreen() 
+    {
+        g_Context.clearRect(0, 0, g_Canvas.width, g_Canvas.height);
+        g_Context.strokeRect(0, 0, g_Canvas.width, g_Canvas.height);
+        g_Context.fillStyle = "rgba(190,38,62,255)";
+        g_Context.fillRect(0, 0, g_Canvas.width, g_Canvas.height);
+    }
+
+    function f_Draw_Enemy() 
+    {
+        for (var i = 0; i < g_Enemy_Array_Len; i++) 
+        {
+            g_enemy[i].m_draw_Enemy(g_Context)
+        }
+    }
+
+    function f_Draw_score() 
+    {
+        g_Context.font = "40px Arial";
+        g_Context.fillStyle = g_text_color;
+        g_Context.fillText(g_Score, 1400, 60);
+    }
+    function f_Draw_End_score() 
+        {
+            g_Context.font = "40px Arial";
+            g_Context.fillStyle = g_text_color;
+            g_Context.fillText(g_Score, g_Canvas.width/2, 400);
+        }
+
+    function f_Draw_Game_End_Text() 
+    {
+        g_Context.font = "60px Arial";
+        g_Context.fillStyle = g_text_color;
+        g_Context.fillText("Game Over", 610, 350);
+    }
+    
+    function f_Game_instruction()
+    {
+        g_Context.font = "60px Arial";
+        g_Context.fillStyle = g_text_color;
+        g_Context.fillText("Instruction:", 600, 200);
+        g_Context.font = "35px Arial";
+        g_Context.fillText("Press Left Key To Move Anticlockwise", 500, 300);
+        g_Context.fillText("Press Right Key To Move Clockwise", 500, 350);
+        g_Context.fillText("Press Space Key To Fire Bullet", 500, 400);
+        g_Context.fillText("Game Start In = "+g_sec, 600, 450);
+    }
+    
+    function f_OnKeyPress(press) 
+    {
+        if (press.keyCode == 37) 
+        {
+            g_Player.rotate_Left_flag = 1;
+        }
+        if (press.keyCode == 39) 
+        {
+            g_Player.rotate_Right_flag = 1;
+        }
+        if (press.keyCode == 32) 
+        {
+            g_Player.bullet.Start_animat_flag = 1;
+        }
+    }
+
+    function f_OnKeyRelease(release) 
+    {
+        if (release.keyCode == 37) 
+        {
+            g_Player.rotate_Left_flag = 0;
+        }
+        if (release.keyCode == 39) 
+        {
+            g_Player.rotate_Right_flag = 0;
+        }
+    }
+
+    function f_GameLoop() 
+    {
+        
+        
+                g_Player.bullet.m_movement();
+                g_Player.m_Barrel_Rotation();
+                g_Player.m_Shoot_Bullet();
+                
+                f_Enemy_and_Bullet_Collision();
+                f_Enemy_and_Player_Collision();
+                g_Player.bullet.m_CircleBorderCollision(g_Canvas);
+                g_Player.m_Player_Border_Collision(g_Canvas);
+                g_enemy_move();
+           
+        
+        
+        f_ClearScreen();
+        
+        
+                g_Player.m_draw_Tank(g_Context);
+                f_Draw_Enemy();
+                if(g_Player.end_flag==1)
+                    {
+                        f_Draw_End_score();
+                    }
+                else
+                    {
+                        f_Draw_score();
+                    }
+                
+        
+        
+        
+        if (g_Player.end_flag == 1) 
+        {
+            f_Draw_Game_End_Text();
+            
+            clearInterval(a);
+        }
+    }
+    window.addEventListener("keydown", f_OnKeyPress);
+    window.addEventListener("keyup", f_OnKeyRelease);
+    f_Enemy_initial();
+    var a = setInterval(f_GameLoop, Time_Interval);
+</script>
+
+</html>
